@@ -1,0 +1,262 @@
+import 'package:flutter/material.dart';
+
+import 'TaskModel.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // Try running your application with "flutter run". You'll see the
+        // application has a blue toolbar. Then, without quitting the app, try
+        // changing the primarySwatch below to Colors.green and then invoke
+        // "hot reload" (press "r" in the console where you ran "flutter run",
+        // or simply save your changes to "hot reload" in a Flutter IDE).
+        // Notice that the counter didn't reset back to zero; the application
+        // is not restarted.
+        primarySwatch: Colors.blue,
+      ),
+      home: MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final textController = TextEditingController();
+
+  List<TaskModel> tasks = [];
+
+  TaskModel currentTask;
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    final TodoHelper _todoHelper = TodoHelper();
+    return Scaffold(
+      body: Container(
+        padding:EdgeInsets.all(32),
+        child: Column(
+          children: <Widget>[
+            TextField(
+              controller: textController,
+            ),
+            FlatButton(
+              child: Text("Insert"),
+              onPressed: (){
+                currentTask = TaskModel(name: textController.text);
+                _todoHelper.insertTask(currentTask);
+              },
+              color: Colors.blue,
+              textColor: Colors.white,
+            ),
+            FlatButton(
+              child: Text("Show All Task"),
+              onPressed: () async{
+                List<TaskModel> list = await _todoHelper.getAllTask();
+
+                setState(() {
+                  tasks = list;
+                });
+              },
+              color: Colors.red,
+              textColor: Colors.white,
+            ),
+
+            Expanded(
+              child: ListView.separated(
+                  itemBuilder: (context, index){
+                    return ListTile(
+                      leading: Text("${tasks[index].id}"),
+                      title: Text("${tasks[index].name}"),
+                    );
+                  },
+                  separatorBuilder: (context, index) => Divider(),
+                  itemCount: tasks.length,
+
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+Coding Menu Utama
+package com.db;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;	
+
+public class UtamaActivity extends Activity {
+	Button btn_Tampil, btn_Tambah;
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.utama);
+
+	btn_Tampil = (Button) findViewById(R.id.btnTampil); 
+	btn_Tambah = (Button) findViewById(R.id.btnTambah);
+
+	btn_Tampil.setOnClickListener(new OnClickListener() { 
+
+	public void onClick(View arg0) { 
+	Intent intent = new Intent(getApplicationContext(),
+		TampilActivity.class); 
+	startActivity(intent);
+		}
+	});
+
+
+
+
+
+btn_Tambah.setOnClickListener(new OnClickListener() {
+
+	public void onClick(View arg0) { 
+ Intent intent = new Intent(getApplicationContext(),
+		TambahActivity.class); 
+	startActivity(intent); 
+				 
+		}
+		}); 
+	}
+
+}
+
+
+Coding Menampilkan Halaman Lainnya
+package com.db;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+public class TampilActivity extends Activity {
+	ListView lvData;
+	Cursor cursor;
+	DataHelper dbCenter;
+	String[] tampungData;
+	public static TampilActivity tampilActivity;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.tampil);
+		tampilActivity = this;
+		dbCenter = new DataHelper(this);
+		tampilData();
+	}
+	public void tampilData() {
+		SQLiteDatabase db = dbCenter.getReadableDatabase();
+		cursor = db.rawQuery("SELECT * FROM tbl_user", null);
+		tampungData = new String[cursor.getCount()];
+		cursor.moveToFirst();
+		for (int i = 0; i < cursor.getCount(); i++) {
+			cursor.moveToPosition(i);
+			tampungData[i] = cursor.getString(0).toString();
+		}
+		lvData = (ListView) findViewById(R.id.listView1);
+		lvData.setAdapter(new ArrayAdapter<String>(this,
+
+	android.R.layout.simple_list_item_1, tampungData));
+		lvData.setSelected(true);
+		lvData.setOnItemClickListener(new OnItemClickListener() {
+public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,long arg3) {
+
+				
+
+final String selection = tampungData[arg2];
+final CharSequence[] dialogitem = { "Lihat Data", "Ubah Data","Hapus Data" };
+AlertDialog.Builder builder = new AlertDialog.Builder(
+	TampilActivity.this);
+	builder.setTitle("Pilihan"); 
+	builder.setItems(dialogitem,new DialogInterface.OnClickListener() {
+public void onClick(DialogInterface dialog, int item) {
+	switch (item) {
+		case 0: 
+Intent i = new Intent(getApplicationContext(),
+DetailActivity.class); 
+i.putExtra("USER_ID", selection);
+startActivity(i);
+break;
+	case 1:
+	// Case Ubah Data
+	break;
+	case 2: 
+	// Case Hapus Data
+	break;
+			}
+		}
+	});
+
+	builder.create().show();
+			}
+		});
+	}
+}
+
+
+
+
+Coding Halaman Penyimpanan data sqllite dan menampilkan ke listview	
+
+package com.db;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DataHelper extends SQLiteOpenHelper {
+
+ private static final String DatabaseName = "databaseku";
+ private static final int DatabaseVersion = 1;
+ 
+ public DataHelper(Context context) {
+  super(context, DatabaseName, null, DatabaseVersion);
+  // TODO Auto-generated constructor stub
+ }
+
+ @Override
+ public void onCreate(SQLiteDatabase arg0) {
+  String sql = "CREATE TABLE tbl_user(user_id text primary key," +
+    "password text null)";
+  arg0.execSQL(sql);
+  
+  sql = "INSERT INTO tbl_user VALUES('001', '123456')";
+  arg0.execSQL(sql);
+  
+  sql = "INSERT INTO tbl_user VALUES('002', '1234567')";
+  arg0.execSQL(sql);
+ }
+
+ @Override
+ public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+  // TODO Auto-generated method stub
+
+ }
+
+}
